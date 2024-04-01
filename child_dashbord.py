@@ -22,7 +22,7 @@ st.title(" 📈 Child Healthcare Dashboard")
 st.markdown('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
 
 # Define the file path
-file_path = "C:/Users/Admin/Downloads/child_masterpy.csv"
+file_path = "child_masterpy.csv"
 
 # Read and process data
 child_data = pd.read_csv(file_path, parse_dates=['date_of_birth', 'date_of_death', 'checkup_date'])
@@ -54,7 +54,7 @@ live_births_count = len(child_data)
 valid_records = child_data[(child_data['date_of_birth'].notnull()) & (child_data['date_of_death'].notnull())].copy()
 
 # Assuming you're reading data from a CSV file
-valid_records = pd.read_csv('C:/Users/Admin/Downloads/child_masterpy.csv', parse_dates=['date_of_birth', 'date_of_death','checkup_date'])
+valid_records = pd.read_csv('child_masterpy.csv', parse_dates=['date_of_birth', 'date_of_death','checkup_date'])
 
 # Now perform your calculations on datetime columns
 valid_records['age_at_death'] = (valid_records['date_of_death'] - valid_records['date_of_birth']).dt.days
