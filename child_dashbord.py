@@ -21,6 +21,7 @@ alt.themes.enable("dark")
 st.title(" 📈 Child Healthcare Dashboard")
 st.markdown('<style>div.block-container{padding-top:1rem;}</style>', unsafe_allow_html=True)
 
+
 # Define the file path
 file_path = "data/child_masterpy.csv"
 
@@ -146,32 +147,44 @@ fig.add_trace(go.Bar(y=[disease_labels[disease] for disease in sorted_diseases],
                      x=male_counts, 
                      orientation='h', 
                      name='Male', 
-                     showlegend=True,
                      marker=dict(color=male_color)))  # Assigning color for male bars
 
 fig.add_trace(go.Bar(y=[disease_labels[disease] for disease in sorted_diseases], 
                      x=female_counts, 
                      orientation='h', 
                      name='Female', 
-                     showlegend=True,
                      marker=dict(color=female_color)))  # Assigning color for female bars
 
 # Update layout
 fig.update_layout(title='Disease Prevalence by Gender',
                   xaxis_title='Number of Occurrences',
                   yaxis_title='Disease',
-                  barmode='stack',
+                  barmode='relative',  # Stack bars horizontally
+                  bargap=0.2,  # Gap between bars
+                  bargroupgap=0.1,  # Gap between bar groups
                   height=600)
-col1,col2,col3 = st.columns((2,5.5, 3), gap='medium')
+
+col1,col2,col3 = st.columns((3,5, 3), gap='medium')
 
 # Child Healthcare Overview
 with col1:
-    st.markdown("#### Child Healthcare Overview")
+    hbnc_count = child_data[child_data['hbncs_id'].notnull()]
+
+    # Filter HBNC children who died
+    hbnc_deaths = hbnc_count[hbnc_count['deathlist_person_id'].notnull()]
+
+    print("Total number of HBNC children: ", len(hbnc_count))
+    print("Number of HBNC child deaths: ", len(hbnc_deaths))
+   # st.markdown("#### Child Healthcare Overview")
     kpi("Total Children", total_children)
+with col1:    
     kpi("Children with Checkups", num_checkups)
     hbnc_records = child_data.dropna(subset=['hbncs_id'])
     num_hbnc_done_children = hbnc_records['child_id'].nunique()
-    kpi("Atleast 1 hbnc done", num_hbnc_done_children)
+with col1:
+    kpi("Total HBNC Count", num_hbnc_done_children)
+with col1:
+    kpi(("HBNC Deaths"),len(hbnc_deaths))
 
 with col1:
     kpi("Infant Mortality Rate", f"{infant_mortality_rate:.2f} % ")
@@ -181,9 +194,45 @@ with col1:
     
 with col1:
     kpi("Under-5 Mortality Rate", f"{under_5_mortality_rate:.2f} %")
+
+# Prevalence of Common Childhood Diseases
+with col3:
+    st.markdown("#### Prevalence of Common Childhood Diseases")
+    st.plotly_chart(fig , use_container_width=True)   
     
+with col2:
     
-with col1:
+    # Plot Total Disease Count by Region
+    st.markdown("#### Total Disease Count by Region")
+
+    # Group data by district name and calculate disease counts
+    disease_counts_by_region = checkup_records.groupby('district_name')[disease_columns].sum()
+    disease_counts_by_region['total_disease_count'] = disease_counts_by_region.sum(axis=1)
+
+    # Sort regions by total disease count
+    sorted_regions = disease_counts_by_region['total_disease_count'].sort_values(ascending=False)
+
+    # Filter to display top N regions
+    top_n = 5
+    top_n_regions = sorted_regions.head(top_n)
+
+    # Create dictionary to store data for top N regions
+    data = {}
+    for region_id, total_disease_count in top_n_regions.items():
+        data[str(region_id)] = total_disease_count
+
+    # Plot total disease count by region
+    fig = go.Figure(data=go.Bar(x=list(data.keys()), y=list(data.values()), marker_color='blue'))
+    fig.update_layout(
+        xaxis_title='District Name',
+        yaxis_title='Total Disease Count',
+        width=800,
+        height=500
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+  
+with col3:
     # Calculate sex ratio
     num_male = child_data[child_data['gender'] == 'M']['child_id'].nunique()
     num_female = child_data[child_data['gender'] == 'F']['child_id'].nunique()
@@ -197,22 +246,16 @@ with col1:
     colors = ['#1f77b4', '#ff69b4']  # Blue for male, pink for female
 
     # Plot sex ratio as a donut chart
+    #st.markdown("#### Sex Ratio")
     fig_sex_ratio = go.Figure(data=[go.Pie(labels=labels, values=values, hole=0.4)])
     fig_sex_ratio.update_traces(marker=dict(colors=colors))  
-    st.markdown("#### Sex Ratio")
 
-    #fig_sex_ratio.update_layout(title='Sex Ratio')
-
-    # Display the chart
-    st.plotly_chart(fig_sex_ratio, use_container_width=True)
+    #st.plotly_chart(fig_sex_ratio, use_container_width=True)
 
         
-# Prevalence of Common Childhood Diseases
-with col3:
-    st.markdown("#### Prevalence of Common Childhood Diseases")
-    st.plotly_chart(fig , use_container_width=True)
 
-with col3:
+
+with col1:
     completed_hbncs = child_data.dropna(subset=['hbncs_id'])
     completed_hbncs_count = completed_hbncs.groupby('child_id')['hbncs_id'].nunique()
 
@@ -259,8 +302,7 @@ with col3:
 
     # Update layout
     fig.update_layout(
-        title="No. of Children who Completed Each HBNC Type",
-        xaxis_title="HBNC Type",
+        #xaxis_title="HBNC Type",
         yaxis_title="Number of Children",
         barmode="stack",
         xaxis=dict(
@@ -270,45 +312,15 @@ with col3:
         width=800,
         height=600
     )
-
+    #st.markdown("#### No. of Children who Completed Each HBNC Type")
     # Display the graph using Streamlit
-    st.plotly_chart(fig, use_container_width=True)
+    #st.plotly_chart(fig, use_container_width=True)
 
-with col2:
-    
-    # Plot Total Disease Count by Region
-    st.markdown("#### Total Disease Count by Region")
-
-    # Group data by district name and calculate disease counts
-    disease_counts_by_region = checkup_records.groupby('district_name')[disease_columns].sum()
-    disease_counts_by_region['total_disease_count'] = disease_counts_by_region.sum(axis=1)
-
-    # Sort regions by total disease count
-    sorted_regions = disease_counts_by_region['total_disease_count'].sort_values(ascending=False)
-
-    # Filter to display top N regions
-    top_n = 5
-    top_n_regions = sorted_regions.head(top_n)
-
-    # Create dictionary to store data for top N regions
-    data = {}
-    for region_id, total_disease_count in top_n_regions.items():
-        data[str(region_id)] = total_disease_count
-
-    # Plot total disease count by region
-    fig = go.Figure(data=go.Bar(x=list(data.keys()), y=list(data.values()), marker_color='blue'))
-    fig.update_layout(
-        xaxis_title='District Name',
-        yaxis_title='Total Disease Count',
-        width=800,
-        height=500
-    )
-    st.plotly_chart(fig, use_container_width=True)
 
 with col2:
  
     # Plot Total Disease Count by Region as a Heatmap
-    st.markdown("#### Total Disease Count by Region (Heatmap)")
+    #st.markdown("#### Total Disease Count by Region (Heatmap)")
 
     # Group data by district name and calculate disease counts
     disease_counts_by_region = checkup_records.groupby('district_name')[disease_columns].sum()
@@ -341,6 +353,21 @@ with col2:
         width=800,
         height=500)
 
+    #st.plotly_chart(fig_heatmap, use_container_width=True)
+col1, col2, col3 = st.columns([3,5,3])
+with col3:
+    # Plot sex ratio
+    st.markdown("#### Sex Ratio")
+    st.plotly_chart(fig_sex_ratio, use_container_width=True)
+
+with col1:
+    # Plot No. of Children who Completed Each HBNC Type
+    st.markdown("#### No. of Children who Completed Each HBNC Type")
+    st.plotly_chart(fig, use_container_width=True)
+
+with col2:
+    # Plot Total Disease Count by Region as a Heatmap
+    st.markdown("#### Total Disease Count by Region (Heatmap)")
     st.plotly_chart(fig_heatmap, use_container_width=True)
 
 
@@ -440,6 +467,7 @@ fig = px.scatter(valid_records,
                  labels={'height_cm': 'Height (cm)', 'weight_in_grams': 'Weight (grams)'}, 
                  title='Height vs. Weight Scatter Plot with Trendline')
 
+
 # Render the Plotly figure using Streamlit
 st.plotly_chart(fig, use_container_width=True)
 
@@ -469,4 +497,4 @@ fig.update_layout(title='Trend of Child Checkups Over Time',
                   yaxis=dict(showgrid=True, zeroline=True))
 
 # Streamlit UI
-st.plotly_chart(fig)
+st.plotly_chart(fig, use_container_width=True)
