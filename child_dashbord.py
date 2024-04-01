@@ -8,7 +8,7 @@ import plotly.express as px
 
 # Page configuration
 st.set_page_config(
-    page_title="Child Healthcare Dashboard",
+    page_title="Childcare Dashboard",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -54,9 +54,6 @@ live_births_count = len(child_data)
 # Filter out records where both date of birth and date of death are available
 valid_records = child_data[(child_data['date_of_birth'].notnull()) & (child_data['date_of_death'].notnull())].copy()
 
-# Assuming you're reading data from a CSV file
-valid_records = pd.read_csv('data/child_masterpy.csv', parse_dates=['date_of_birth', 'date_of_death','checkup_date'])
-
 # Now perform your calculations on datetime columns
 valid_records['age_at_death'] = (valid_records['date_of_death'] - valid_records['date_of_birth']).dt.days
 
@@ -67,14 +64,12 @@ valid_records['age_at_death'] = (valid_records['date_of_death'] - valid_records[
  # Calculate the number of infant deaths (those who died within 1 year)
 infant_deaths_count = len(valid_records[valid_records['age_at_death'] <= 365])
 
-print(infant_deaths_count)
 # Calculate the infant mortality rate (IMR) per 1000 live births
 infant_mortality_rate = (infant_deaths_count / live_births_count) * 1000
 
 # Neonatal morality rate
 # Filter out records where age at death is less than or equal to 28 days (neonatal period)
 neonatal_deaths_count = len(valid_records[valid_records['age_at_death'] <= 28])
-print(neonatal_deaths_count)
 
 # Calculate the neonatal mortality rate (NMR) per 1000 live births
 neonatal_mortality_rate = (neonatal_deaths_count / live_births_count) * 1000
@@ -82,12 +77,10 @@ neonatal_mortality_rate = (neonatal_deaths_count / live_births_count) * 1000
 # Under 5 mortality rate
 # Calculate the number of deaths under 5 years of age
 under_5_deaths_count = len(valid_records[valid_records['age_at_death'] < 1825])  # 1825 days = 5 years
-print(under_5_deaths_count)
 
 # Calculate the under-5 mortality rate (U5MR) per 1000 live births
 under_5_mortality_rate = (under_5_deaths_count / live_births_count) * 1000
 
-print(f"Under-5 Mortality Rate (U5MR): {under_5_mortality_rate:.2f} per 1000 live births")
 
 # Health Checkups
 checkup_records = child_data.dropna(subset=['checkup_id'])
@@ -420,7 +413,7 @@ stunted_children = latest_checkups[latest_checkups['haz_category'] == 'Stunted']
 underweight_children = latest_checkups[latest_checkups['bmi_category'] == 'Underweight'].shape[0]
 
 # Calculate the ratio of stunted children to underweight children
-ratio_stunted_to_underweight = stunted_children / underweight_children
+#ratio_stunted_to_underweight = stunted_children / underweight_children
 
 col1, col2, col3 = st.columns(3)
 
