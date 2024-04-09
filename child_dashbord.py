@@ -3,7 +3,6 @@ import plotly.graph_objects as go
 import pandas as pd
 import altair as alt
 import plotly.express as px
-import statsmodels.api as sm
 #####################################
 
 # Page configuration
